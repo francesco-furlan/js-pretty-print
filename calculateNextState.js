@@ -46,6 +46,8 @@ const calculateNextState = (initialState, item, depthIncrement) => {
     arrDepth: prevArrDepth,
     insideObject: prevIsInsideObject,
     insideArray: prevIsInsideArray,
+    isObjKey: prevIsObjKey,
+    currentlyInsideArray: prevIsCurrentlyInsideArray,
   } = initialState;
   const symbolState = calculateSymbolState(item);
   const baseStateData = { symbol: symbolState, item, current: initialState };
@@ -78,7 +80,7 @@ const calculateNextState = (initialState, item, depthIncrement) => {
         insideObject: objDepth > 0,
         insideArray: prevIsInsideArray,
         currentlyInsideArray,
-        isObjKey: !currentlyInsideArray,
+        isObjKey: true,
       },
     };
   } else if (symbolState.isOpenArrChar) {
@@ -106,16 +108,33 @@ const calculateNextState = (initialState, item, depthIncrement) => {
         totalDepthSpaces: prevDepth - depthIncrement,
         objDepth: prevObjDepth,
         arrDepth,
-        insideObject: prevIsInsideObject,
+        insideObject: prevObjDepth > 0,
         insideArray: arrDepth > 0,
         currentlyInsideArray,
         isObjKey: !currentlyInsideArray,
       },
     };
   } else {
+    const lastWasInsideObjOrArray = prevIsInsideObject || prevIsInsideArray;
+
+    // If the previous item was inside an obj or an array,
+    // we calculate the new isObjKey based on the previous context
+    // (if it was inside an object and not in an array then it was a key`).
+    // Otherwise we take the previous isObjKey.
+    const isObjKeyBasedOnPrevValue = lastWasInsideObjOrArray
+      ? prevIsInsideObject && !prevIsCurrentlyInsideArray
+      : prevIsObjKey;
+
+    // If the previous item was a key then the current will be a value.
+    // Otherwise
+    const lastWasObjKey = prevIsInsideObject && prevIsObjKey;
+    const isObjKey = lastWasObjKey ? false : isObjKeyBasedOnPrevValue;
     return {
       ...baseStateData,
-      next: initialState,
+      next: {
+        ...initialState,
+        isObjKey,
+      },
     };
   }
 };
