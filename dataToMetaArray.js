@@ -4,6 +4,8 @@ const dataToMetaArray = (data) => {
     if (Array.isArray(data)) {
       const mappedArr = data.flatMap((value) => dataToMetaArray(value));
       return [...result, "[", ...mappedArr, "]"];
+    } else if (data instanceof Date) {
+      return [...result, data.toISOString()];
     } else {
       const stringifiedObj = Object.entries(data).flatMap(([key, value]) => {
         const stringifiedValue = dataToMetaArray(value);
