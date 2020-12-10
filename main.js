@@ -28,7 +28,7 @@ const prettyPrint = (data) => {
       const formattedValue = formatValue(
         currentItem,
         nextItem,
-        nextItemIsClosingSymbol
+        !nextItem || nextItemIsClosingSymbol
       );
 
       const currentState = {
