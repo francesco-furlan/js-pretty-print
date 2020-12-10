@@ -1,83 +1,60 @@
 const { dataToMetaArray } = require("./dataToMetaArray");
-const { calculateNextState } = require("./calculateNextState");
+const {
+  EMPTY_STATE,
+  calculateSymbolState,
+  calculateNextState,
+} = require("./calculateNextState");
 const { formatValue } = require("./formatValue");
 const { calculateText } = require("./calculateText");
 
-const prettyPrint = (data) => {
+const prettyPrint = (data, indentation = 2) => {
   const result = dataToMetaArray(data);
-  const depthCount = 2;
   const { formatted } = result.reduce(
     (acc, currentItem, index, originalArray) => {
-      const {
-        symbol: { isSymbolChar, isOpenObjChar, isCloseObjChar, isCloseArrChar },
-        current: {
-          insideObject,
-          isObjKey,
-          totalDepthSpaces,
-          insideArray,
-          currentlyInsideArray,
-          formatted,
-        },
-        next,
-      } = calculateNextState(acc, currentItem, depthCount);
+      const { symbol, current, next } = calculateNextState(
+        acc,
+        currentItem,
+        indentation
+      );
+
+      const currentDepthSpaces = new Array(current.totalDepthSpaces)
+        .fill(" ")
+        .join("");
 
       const nextItem = originalArray[index + 1];
-      const nextItemIsClosingSymbol = nextItem === "}" || nextItem === "]";
-      const currentDepthSpaces = new Array(totalDepthSpaces).fill(" ").join("");
+
+      const { isClosingSymbol: nextItemIsClosingSymbol } = calculateSymbolState(
+        nextItem
+      );
 
       const formattedValue = formatValue(
         currentItem,
         nextItem,
         !nextItem || nextItemIsClosingSymbol
       );
-
       const currentState = {
         currentDepthSpaces,
         currentItem,
         formattedValue,
-        isObjKey,
-        insideObject,
-        insideArray,
-        currentlyInsideArray,
+        isObjKey: current.isObjKey,
+        insideObject: current.insideObject,
+        insideArray: current.insideArray,
+        currentlyInsideArray: current.currentlyInsideArray,
       };
       const nextState = { next, nextItem };
       const symbolState = {
-        isSymbolChar,
-        isClosingSymbol: isCloseObjChar || isCloseArrChar,
-        isCloseArrChar,
-        isOpenObjChar,
-        isCloseObjChar,
+        ...symbol,
         nextItemIsClosingSymbol,
       };
 
-      const { text, nextIsKey } = calculateText(
-        symbolState,
-        currentState,
-        nextState
-      );
-      const newFormatted = `${formatted}${text}`;
-      return { ...next, isObjKey: nextIsKey, formatted: newFormatted };
+      const text = calculateText(symbolState, currentState, nextState);
+
+      return { ...next, formatted: `${current.formatted}${text}` };
     },
-    {
-      symbol: {
-        isSymbolChar: false,
-        isOpenObjChar: false,
-        isCloseObjChar: false,
-        isOpenArrChar: false,
-        isCloseArrChar: false,
-      },
-      totalDepthSpaces: 0,
-      objDepth: 0,
-      arrDepth: 0,
-      insideObject: false,
-      insideArray: false,
-      isObjKey: false,
-      formatted: "",
-      currentlyInsideArray: false,
-      stack: [],
-    }
+    EMPTY_STATE
   );
   console.log(formatted);
+  return formatted;
 };
 
 module.exports = {
