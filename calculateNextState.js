@@ -1,3 +1,24 @@
+const EMPTY_STATE = {
+  symbol: {
+    isSymbolChar: false,
+    isOpenObjChar: false,
+    isCloseObjChar: false,
+    isOpenArrChar: false,
+    isCloseArrChar: false,
+    isOpeningSymbol: false,
+    isClosingSymbol: false,
+  },
+  totalDepthSpaces: 0,
+  objDepth: 0,
+  arrDepth: 0,
+  insideObject: false,
+  insideArray: false,
+  isObjKey: false,
+  formatted: "",
+  currentlyInsideArray: false,
+  stack: [],
+};
+
 const calculateSymbolState = (item) => {
   const isOpenArrChar = item === "[";
   const isCloseArrChar = item === "]";
@@ -8,6 +29,8 @@ const calculateSymbolState = (item) => {
     isCloseArrChar,
     isOpenObjChar,
     isCloseObjChar,
+    isOpeningSymbol: isOpenArrChar || isOpenObjChar,
+    isClosingSymbol: isCloseArrChar || isCloseObjChar,
     isSymbolChar:
       isOpenArrChar || isCloseArrChar || isOpenObjChar || isCloseObjChar,
   };
@@ -98,5 +121,7 @@ const calculateNextState = (initialState, item, depthIncrement) => {
 };
 
 module.exports = {
+  EMPTY_STATE,
+  calculateSymbolState,
   calculateNextState,
 };
