@@ -37,7 +37,7 @@ const wrapCloseObj = (depth) => ({
 
 const dataToMetaArray = (
   data,
-  indentation = 1,
+  depthIncrement = 1,
   depth = 0,
   additionalMeta = {}
 ) => {
@@ -47,9 +47,9 @@ const dataToMetaArray = (
       const mappedArr = data.flatMap((value) =>
         dataToMetaArray(
           value,
-          indentation,
-          depth + indentation,
-          wrapArrayValue(depth + indentation)
+          depthIncrement,
+          depth + depthIncrement,
+          wrapArrayValue(depth + depthIncrement)
         )
       );
       return [
@@ -65,11 +65,11 @@ const dataToMetaArray = (
       const stringifiedObj = Object.entries(data).flatMap(([key, value]) => {
         const stringifiedValue = dataToMetaArray(
           value,
-          indentation,
-          depth + indentation,
-          wrapObjValue(depth + indentation)
+          depthIncrement,
+          depth + depthIncrement,
+          wrapObjValue(depth + depthIncrement)
         );
-        return [wrapObjKey(key, depth + indentation), ...stringifiedValue];
+        return [wrapObjKey(key, depth + depthIncrement), ...stringifiedValue];
       });
       return [
         ...result,
