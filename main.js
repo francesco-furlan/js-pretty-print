@@ -1,57 +1,46 @@
 const { dataToMetaArray } = require("./dataToMetaArray");
-const {
-  EMPTY_STATE,
-  calculateSymbolState,
-  calculateNextState,
-} = require("./calculateNextState");
-const { formatValue } = require("./formatValue");
-const { calculateText } = require("./calculateText");
 
 const prettyPrint = (data, indentation = 2) => {
-  const result = dataToMetaArray(data);
-  const { formatted } = result.reduce(
-    (acc, currentItem, index, originalArray) => {
-      const { symbol, current, next } = calculateNextState(
-        acc,
-        currentItem,
-        indentation
-      );
-
-      const currentDepthSpaces = new Array(current.totalDepthSpaces)
-        .fill(" ")
-        .join("");
-
+  const result = dataToMetaArray(data, indentation);
+  const formatted = result.reduce(
+    (
+      prev,
+      { depth, value, isOpenSymbol, isCloseSymbol, isObjKey, isObjValue },
+      index,
+      originalArray
+    ) => {
+      const prevItem = originalArray[index - 1];
       const nextItem = originalArray[index + 1];
+      const prevItemIsOpenSymbol = prevItem ? prevItem.isOpenSymbol : false;
+      const nextItemIsCloseSymbol = nextItem ? nextItem.isCloseSymbol : false;
 
-      const { isClosingSymbol: nextItemIsClosingSymbol } = calculateSymbolState(
-        nextItem
-      );
+      const spaces =
+        (isOpenSymbol && !prevItemIsOpenSymbol && !nextItemIsCloseSymbol) ||
+        (isCloseSymbol && prevItemIsOpenSymbol) ||
+        isObjValue
+          ? ""
+          : new Array(depth).fill(" ").join("");
 
-      const formattedValue = formatValue(
-        currentItem,
-        nextItem,
-        !nextItem || nextItemIsClosingSymbol
-      );
-      const currentState = {
-        currentDepthSpaces,
-        currentItem,
-        formattedValue,
-        isObjKey: current.isObjKey,
-        insideObject: current.insideObject,
-        insideArray: current.insideArray,
-        currentlyInsideArray: current.currentlyInsideArray,
-      };
-      const nextState = { next, nextItem };
-      const symbolState = {
-        ...symbol,
-        nextItemIsClosingSymbol,
-      };
+      const formattedValue =
+        typeof value === "string" && !(isOpenSymbol || isCloseSymbol)
+          ? `"${value}"`
+          : value;
 
-      const text = calculateText(symbolState, currentState, nextState);
+      const colon = isObjKey ? ": " : "";
 
-      return { ...next, formatted: `${current.formatted}${text}` };
+      const comma =
+        !isObjKey && nextItem && !isOpenSymbol && !nextItem.isCloseSymbol
+          ? ","
+          : "";
+
+      const newLine =
+        isObjKey || !nextItem || (isOpenSymbol && nextItemIsCloseSymbol)
+          ? ""
+          : "\n";
+
+      return `${prev}${spaces}${formattedValue}${colon}${comma}${newLine}`;
     },
-    EMPTY_STATE
+    ""
   );
   console.log(formatted);
   return formatted;
