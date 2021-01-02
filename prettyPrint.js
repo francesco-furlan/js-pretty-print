@@ -13,11 +13,16 @@ const prettyPrint = (data, indentation = 2) => {
       const nextItem = originalArray[index + 1];
       const prevItemIsOpenSymbol = prevItem ? prevItem.isOpenSymbol : false;
       const nextItemIsCloseSymbol = nextItem ? nextItem.isCloseSymbol : false;
+      const prevItemIsCloseSymbol = prevItem ? prevItem.isCloseSymbol : false;
+      const prevItemIsObjKey = prevItem ? prevItem.isObjKey : false;
 
       const spaces =
-        (isOpenSymbol && !prevItemIsOpenSymbol && !nextItemIsCloseSymbol) ||
+        (isOpenSymbol &&
+          !prevItemIsOpenSymbol &&
+          !prevItemIsCloseSymbol &&
+          !nextItemIsCloseSymbol) ||
         (isCloseSymbol && prevItemIsOpenSymbol) ||
-        isObjValue
+        prevItemIsObjKey
           ? ""
           : new Array(depth).fill(" ").join("");
 
@@ -42,7 +47,7 @@ const prettyPrint = (data, indentation = 2) => {
     },
     ""
   );
-  console.log(formatted);
+
   return formatted;
 };
 
