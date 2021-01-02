@@ -1,37 +1,24 @@
+const wrapSymbol = (isOpenSymbol, value, depth) => ({
+  isOpenSymbol,
+  isCloseSymbol: !isOpenSymbol,
+  value,
+  depth,
+});
+const wrapOpenArray = (depth) => wrapSymbol(true, "[", depth);
+const wrapOpenObj = (depth) => wrapSymbol(true, "{", depth);
+const wrapCloseArray = (depth) => wrapSymbol(false, "]", depth);
+const wrapCloseObj = (depth) => wrapSymbol(false, "}", depth);
+
 const wrapArrayValue = (value, depth) => ({
   isArrayValue: true,
   value,
   depth,
 });
-const wrapObjKey = (value, depth) => ({
-  isObjKey: true,
-  value,
-  depth,
-});
-const wrapObjValue = (value, depth) => ({
-  isObjValue: true,
-  value,
-  depth,
-});
 
-const wrapOpenArray = (depth) => ({
-  isOpenSymbol: true,
-  value: "[",
-  depth,
-});
-const wrapOpenObj = (depth) => ({
-  isOpenSymbol: true,
-  value: "{",
-  depth,
-});
-const wrapCloseArray = (depth) => ({
-  isCloseSymbol: true,
-  value: "]",
-  depth,
-});
-const wrapCloseObj = (depth) => ({
-  isCloseSymbol: true,
-  value: "}",
+const wrapObj = (isObjKey, value, depth) => ({
+  isObjKey,
+  isObjValue: !isObjKey,
+  value,
   depth,
 });
 
@@ -41,6 +28,7 @@ const dataToMetaArray = (
   depth = 0,
   additionalMeta = {}
 ) => {
+  const incrementedDepth = depth + depthIncrement;
   if (typeof data === "object") {
     let result = [];
     if (Array.isArray(data)) {
@@ -48,8 +36,8 @@ const dataToMetaArray = (
         dataToMetaArray(
           value,
           depthIncrement,
-          depth + depthIncrement,
-          wrapArrayValue(depth + depthIncrement)
+          incrementedDepth,
+          wrapArrayValue()
         )
       );
       return [
@@ -59,17 +47,19 @@ const dataToMetaArray = (
         wrapCloseArray(depth),
       ];
     } else if (data instanceof Date) {
-      const valueObj = { ...additionalMeta, value: data.toISOString(), depth };
-      return [...result, valueObj];
+      return [
+        ...result,
+        { ...additionalMeta, value: data.toISOString(), depth },
+      ];
     } else {
       const stringifiedObj = Object.entries(data).flatMap(([key, value]) => {
         const stringifiedValue = dataToMetaArray(
           value,
           depthIncrement,
-          depth + depthIncrement,
-          wrapObjValue(depth + depthIncrement)
+          incrementedDepth,
+          wrapObj()
         );
-        return [wrapObjKey(key, depth + depthIncrement), ...stringifiedValue];
+        return [wrapObj(true, key, incrementedDepth), ...stringifiedValue];
       });
       return [
         ...result,
